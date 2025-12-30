@@ -1,0 +1,129 @@
+---
+# ============================================================================
+# SSH HARDENING BASELINE (Key-Only Access)
+# ============================================================================
+
+- name: Apply SSH Hardening Baseline (sshd_config)
+  hosts: ubuntu_servers
+  become: true # Required to modify system files and restart services
+
+  vars:
+    # CRITICAL: Define groups explicitly allowed to connect via SSH
+    # Ensure your Ansible user (ubuntu) is a member of one of these groups
+    allowed_ssh_groups: "ubuntu sudo"
+
+    # Terminate idle sessions after 5 minutes (300 seconds)
+    # Prevents unattended sessions from becoming a security liability
+    client_alive_timeout: 300
+
+  tasks:
+    # ------------------------------------------------------------------------
+    # STEP 1: Ensure SSH Server Package is Installed
+    # ------------------------------------------------------------------------
+    - name: Ensure SSH server package is installed
+      ansible.builtin.apt:
+        name: openssh-server
+        state: present
+        update_cache: true
+      tags: install
+
+    # ------------------------------------------------------------------------
+    # STEP 2: Force SSH Protocol 2 (Modern and Secure)
+    # ------------------------------------------------------------------------
+    # Protocol 1 is deprecated and vulnerable to attacks
+    - name: Ensure SSH Protocol 2 is used
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^Protocol"
+        line: "Protocol 2"
+        state: present
+      notify: Restart sshd
+
+    # ------------------------------------------------------------------------
+    # STEP 3: Disable Root Login
+    # ------------------------------------------------------------------------
+    # Prevents direct brute-force attacks against the root account
+    # Root access should only be gained through sudo after normal user login
+    - name: Disable Root Login
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^PermitRootLogin"
+        line: "PermitRootLogin no"
+        state: present
+      notify: Restart sshd
+
+    # ------------------------------------------------------------------------
+    # STEP 4: Disable Password Authentication (Key-Only Access)
+    # ------------------------------------------------------------------------
+    # CRITICAL: This forces SSH key-based authentication only
+    # Eliminates risk of weak/compromised passwords for remote access
+    # WARNING: Ensure you have SSH keys configured before applying this
+    - name: Disable Password Authentication (Force Key-Only Login)
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^PasswordAuthentication"
+        line: "PasswordAuthentication no"
+        state: present
+      notify: Restart sshd
+
+    # ------------------------------------------------------------------------
+    # STEP 5: Restrict SSH Access to Specific Groups
+    # ------------------------------------------------------------------------
+    # Only users in defined groups (e.g., ubuntu, sudo) can connect via SSH
+    # Provides an additional layer of access control
+    - name: Restrict SSH Access to Specific Groups
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^AllowGroups"
+        line: "AllowGroups {{ allowed_ssh_groups }}"
+        state: present
+        insertafter: EOF
+      notify: Restart sshd
+
+    # ------------------------------------------------------------------------
+    # STEP 6: Disable X11 Forwarding
+    # ------------------------------------------------------------------------
+    # X11 forwarding is rarely needed and can be a security risk
+    # Disable unless specifically required for your use case
+    - name: Disable X11 Forwarding
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^X11Forwarding"
+        line: "X11Forwarding no"
+        state: present
+      notify: Restart sshd
+
+    # ------------------------------------------------------------------------
+    # STEP 7: Configure Idle Session Timeout
+    # ------------------------------------------------------------------------
+    # ClientAliveInterval: Server sends keepalive message every N seconds
+    # If client doesn't respond, connection is considered idle
+    - name: Set Client Idle Timeout (Timeout after 5 minutes of no activity)
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^ClientAliveInterval"
+        line: "ClientAliveInterval {{ client_alive_timeout }}"
+        state: present
+      notify: Restart sshd
+
+    # ClientAliveCountMax: Number of keepalive messages before disconnect
+    # With interval=300 and count=3, session terminates after 15 mins idle
+    - name: Limit ClientAliveCountMax to 3 checks
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^ClientAliveCountMax"
+        line: "ClientAliveCountMax 3"
+        state: present
+      notify: Restart sshd
+
+  # --------------------------------------------------------------------------
+  # HANDLERS: Only Execute When Configuration Changes
+  # --------------------------------------------------------------------------
+  handlers:
+    # Restart SSH daemon to apply configuration changes
+    # Only runs if one of the tasks above reports a change
+    - name: Restart sshd
+      ansible.builtin.service:
+        name: ssh
+        state: restarted
+        enabled: true

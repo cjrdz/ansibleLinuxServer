@@ -1,0 +1,139 @@
+---
+# ============================================================================
+# INSTALL NGINX ON UBUNTU SERVERS AND CREATE index.nginx-debian.html
+# ============================================================================
+
+- name: Install and Configure Nginx with Custom Index Page
+  hosts: ubuntu_servers
+  become: true
+
+  vars:
+    # Nginx package and service name
+    nginx_package: nginx
+    nginx_service: nginx
+    nginx_root: /var/www/html
+    index_file: index.nginx-debian.html
+    node_name: "Node1"
+
+  tasks:
+    # ------------------------------------------------------------------------
+    # STEP 1: Update Package Cache
+    # ------------------------------------------------------------------------
+    - name: Update apt package cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      register: cache_update
+
+    - name: Display cache update result
+      ansible.builtin.debug:
+        msg: "Package cache updated on {{ inventory_hostname }}"
+      when: cache_update is succeeded
+
+    # ------------------------------------------------------------------------
+    # STEP 2: Install Nginx Web Server
+    # ------------------------------------------------------------------------
+    - name: Install Nginx web server
+      ansible.builtin.apt:
+        name: "{{ nginx_package }}"
+        state: present
+        update_cache: no
+      register: nginx_install
+      tags: install
+
+    - name: Display Nginx installation result
+      ansible.builtin.debug:
+        msg: "Nginx installed successfully on {{ inventory_hostname }}"
+      when: nginx_install is succeeded
+
+    # ------------------------------------------------------------------------
+    # STEP 3: Ensure Nginx Service is Started and Enabled
+    # ------------------------------------------------------------------------
+    - name: Start Nginx service
+      ansible.builtin.service:
+        name: "{{ nginx_service }}"
+        state: started
+        enabled: true
+      register: nginx_started
+      tags: service
+
+    - name: Display Nginx service status
+      ansible.builtin.debug:
+        msg: "Nginx service started and enabled on {{ inventory_hostname }}"
+      when: nginx_started is succeeded
+
+    # ------------------------------------------------------------------------
+    # STEP 4: Deploy Custom index.nginx-debian.html from Template
+    # ------------------------------------------------------------------------
+    # This deploys a welcome page from a separate template file for easier editing
+    - name: Deploy index.nginx-debian.html from template
+      ansible.builtin.template:
+        src: index.html
+        dest: "{{ nginx_root }}/{{ index_file }}"
+        owner: root
+        group: root
+        mode: "0644"
+      register: index_created
+      tags: configure
+
+    - name: Display index page creation result
+      ansible.builtin.debug:
+        msg: "Custom index.nginx-debian.html created on {{ inventory_hostname }}"
+      when: index_created is succeeded
+
+    # ------------------------------------------------------------------------
+    # STEP 5: Verify Nginx Configuration
+    # ------------------------------------------------------------------------
+    - name: Test Nginx configuration syntax
+      ansible.builtin.command:
+        cmd: nginx -t
+      register: nginx_test
+      changed_when: false
+      tags: validate
+
+    - name: Display Nginx configuration test result
+      ansible.builtin.debug:
+        msg: "Nginx configuration is valid on {{ inventory_hostname }}"
+      when: nginx_test is succeeded
+
+    # ------------------------------------------------------------------------
+    # STEP 6: Reload Nginx to Apply Changes
+    # ------------------------------------------------------------------------
+    - name: Reload Nginx service to apply changes
+      ansible.builtin.service:
+        name: "{{ nginx_service }}"
+        state: reloaded
+      register: nginx_reloaded
+      tags: service
+
+    - name: Display Nginx reload result
+      ansible.builtin.debug:
+        msg: "Nginx reloaded successfully on {{ inventory_hostname }}"
+      when: nginx_reloaded is succeeded
+
+    # ------------------------------------------------------------------------
+    # STEP 7: Verification - Check Nginx is Running
+    # ------------------------------------------------------------------------
+    - name: Verify Nginx service is running
+      ansible.builtin.command:
+        cmd: systemctl is-active nginx
+      register: nginx_status
+      changed_when: false
+      tags: validate
+
+    - name: Display final Nginx status
+      ansible.builtin.debug:
+        msg: "Nginx service status: {{ nginx_status.stdout }}"
+      when: nginx_status is succeeded
+
+    # Display the custom index file content for verification
+    - name: Verify index file was created with correct content
+      ansible.builtin.stat:
+        path: "{{ nginx_root }}/{{ index_file }}"
+      register: index_stat
+      tags: validate
+
+    - name: Display index file verification
+      ansible.builtin.debug:
+        msg: "Index file exists at {{ nginx_root }}/{{ index_file }}"
+      when: index_stat.stat.exists

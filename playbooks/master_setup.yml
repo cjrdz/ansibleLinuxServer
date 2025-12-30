@@ -1,0 +1,28 @@
+---
+# ============================================================================
+# MASTER HARDENING PLAYBOOK
+# Runs all hardening playbooks in the correct order
+# ============================================================================
+
+- name: Complete Server Hardening Setup - Ubuntu servers with NGINX
+  hosts: ubuntu_servers
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Display hardening start message
+      ansible.builtin.debug:
+        msg: "Starting complete hardening process for {{ inventory_hostname }}"
+
+- import_playbook: 01_updates_patching.yml
+- import_playbook: 02_nginx_hardening.yml
+- import_playbook: 03_ufw_firewall.yml
+- import_playbook: 04_ssh_hardening.yml
+
+- name: Hardening Complete
+  hosts: ubuntu_servers
+  gather_facts: false
+  tasks:
+    - name: Display completion message
+      ansible.builtin.debug:
+        msg: "Hardening process completed for {{ inventory_hostname }}"

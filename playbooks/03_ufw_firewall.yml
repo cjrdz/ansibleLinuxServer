@@ -1,0 +1,145 @@
+---
+# ============================================================================
+# UFW FIREWALL HARDENING (Universal - All Environments)
+# ============================================================================
+
+- name: Apply UFW Firewall Hardening
+  hosts: ubuntu_servers
+  become: true
+  vars:
+    # Default policy: deny all incoming traffic unless explicitly allowed
+    default_policy_incoming: deny
+    # Set to true only for Oracle Cloud Infrastructure instances
+    is_oracle_cloud: true
+
+  tasks:
+    # ------------------------------------------------------------------------
+    # STEP 1: Package Installation with Retry Logic
+    # ------------------------------------------------------------------------
+    # Updates apt cache with retry mechanism to handle temporary network issues
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600 # Cache valid for 1 hour
+      register: apt_update
+      retries: 5 # Retry up to 5 times
+      delay: 10 # Wait 10 seconds between retries
+      until: apt_update is success
+      failed_when: false # Don't fail playbook if cache update fails
+
+    # Install UFW firewall package (required on all systems)
+    - name: Install UFW package (if not present)
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+        update_cache: no # Use cached package list from previous task
+
+    # Install iptables-persistent only on Oracle Cloud for rule persistence
+    - name: Install iptables-persistent (for Oracle Cloud compatibility)
+      ansible.builtin.apt:
+        name: iptables-persistent
+        state: present
+        update_cache: no
+      when: is_oracle_cloud | bool
+
+    # ------------------------------------------------------------------------
+    # STEP 2: Oracle Cloud Specific - Handle Pre-existing iptables Layer
+    # ------------------------------------------------------------------------
+    # Oracle Cloud instances have an iptables REJECT rule that blocks traffic
+    # before UFW can process it. These tasks insert ACCEPT rules before the
+    # REJECT rule to ensure HTTP/HTTPS traffic reaches the application.
+
+    # Check if Oracle's default REJECT rule exists in the INPUT chain
+    - name: Check if Oracle Cloud REJECT rule exists
+      ansible.builtin.shell: |
+        iptables -L INPUT -n --line-numbers | grep -E "REJECT.*icmp-host-prohibited"
+      register: oracle_reject_rule
+      failed_when: false
+      changed_when: false
+      when: is_oracle_cloud | bool
+
+    # Insert HTTP rule at position 5 (before Oracle's REJECT rule at line 5)
+    - name: Insert HTTP rule BEFORE Oracle's REJECT rule
+      ansible.builtin.iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: 80
+        jump: ACCEPT
+        action: insert
+        rule_num: 5
+      when:
+        - is_oracle_cloud | bool
+        - oracle_reject_rule.rc == 0
+
+    # Insert HTTPS rule at position 5 (pushes HTTP to position 6)
+    - name: Insert HTTPS rule BEFORE Oracle's REJECT rule
+      ansible.builtin.iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: 443
+        jump: ACCEPT
+        action: insert
+        rule_num: 5
+      when:
+        - is_oracle_cloud | bool
+        - oracle_reject_rule.rc == 0
+
+    # Persist iptables rules across reboots (Oracle Cloud only)
+    - name: Save iptables rules permanently (Oracle Cloud)
+      ansible.builtin.shell: |
+        iptables-save > /etc/iptables/rules.v4
+      when:
+        - is_oracle_cloud | bool
+        - oracle_reject_rule.rc == 0
+
+    # ------------------------------------------------------------------------
+    # STEP 3: Universal UFW Configuration (All Environments)
+    # ------------------------------------------------------------------------
+    # Set default policies: DENY all incoming, ALLOW all outgoing
+    # This is the foundation of the "deny-by-default" security model
+    - name: Set default firewall policy to DENY incoming and ALLOW outgoing
+      community.general.ufw:
+        direction: "{{ item.direction }}"
+        policy: "{{ item.policy }}"
+      loop:
+        - { direction: "incoming", policy: "{{ default_policy_incoming }}" }
+        - { direction: "outgoing", policy: "allow" }
+
+    # Dynamically allow only required ports defined in group_vars
+    # Format in group_vars: required_ports: ["22/tcp", "80/tcp", "443/tcp"]
+    - name: Allow REQUIRED ports defined in group variables
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.split('/')[0] }}" # Extract port number
+        proto: "{{ item.split('/')[1] }}" # Extract protocol (tcp/udp)
+      loop: "{{ required_ports }}"
+
+    # Enable UFW firewall and ensure it starts on boot
+    - name: Enable UFW (if not already enabled)
+      community.general.ufw:
+        state: enabled
+
+    # ------------------------------------------------------------------------
+    # STEP 4: Verification and Audit (Detective Controls)
+    # ------------------------------------------------------------------------
+    # Display UFW status for audit trail and compliance verification
+    - name: Report final UFW status
+      ansible.builtin.command: ufw status verbose
+      register: ufw_status
+      changed_when: false
+
+    - name: Display UFW status
+      ansible.builtin.debug:
+        var: ufw_status.stdout_lines
+
+    # Display iptables INPUT chain (Oracle Cloud only) to verify rule order
+    - name: Report final iptables INPUT chain (Oracle Cloud only)
+      ansible.builtin.command: iptables -L INPUT -n --line-numbers
+      register: iptables_status
+      changed_when: false
+      when: is_oracle_cloud | bool
+
+    - name: Display iptables INPUT chain (Oracle Cloud only)
+      ansible.builtin.debug:
+        var: iptables_status.stdout_lines
+      when: is_oracle_cloud | bool

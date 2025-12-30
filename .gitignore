@@ -1,0 +1,20 @@
+# SSH Keys - NEVER COMMIT
+*.key
+*.pem
+*.pub
+*private*key*
+
+# Environment files with secrets
+.env
+secrets/
+
+# Ansible runtime files
+*.retry
+.ansible/
+logs/
+/tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+

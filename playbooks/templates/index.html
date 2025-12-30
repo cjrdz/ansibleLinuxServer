@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Home | {{ inventory_hostname }}</title>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+        />
+        <link
+            rel="icon"
+            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🏠</text></svg>"
+        />
+        <style>
+            body {
+                display: grid;
+                place-items: center;
+                min-height: 100vh;
+            }
+
+            main {
+                max-width: 500px;
+                width: 90%;
+            }
+
+            .status {
+                color: #27ae60;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>Welcome to {{ inventory_hostname }}</h1>
+
+            <article>
+                <h2>Server Status</h2>
+                <ul>
+                    <li>
+                        <strong>Status:</strong>
+                        <span class="status">✓ Running</span>
+                    </li>
+                    <li><strong>Web Server:</strong> Nginx</li>
+                    <li><strong>Operating System:</strong> Ubuntu</li>
+                    <li>
+                        <strong>Deployed:</strong> {{
+                        ansible_facts["date_time"]["iso8601"] }}
+                    </li>
+                </ul>
+            </article>
+
+            <footer>
+                <small>Deployed via Ansible</small>
+            </footer>
+        </main>
+    </body>
+</html>

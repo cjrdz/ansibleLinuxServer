@@ -1,0 +1,11 @@
+---
+# Server Node1 Configuration
+# Set these in your .env file:
+#   ANSIBLE_HOST_NODE1=your.node1.server.ip
+#   ANSIBLE_SSH_KEY_PATH_NODE1=~/.ssh/your_key (or use ANSIBLE_SSH_KEY_PATH for all servers)
+
+ansible_host: "{{ lookup('env', 'ANSIBLE_HOST_NODE1') | mandatory }}"
+ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY_PATH_NODE1') | default(lookup('env', 'ANSIBLE_SSH_KEY_PATH')) }}"
+
+# server_role: node
+# server_function: kubernetes_worker
