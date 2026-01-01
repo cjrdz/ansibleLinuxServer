@@ -10,6 +10,7 @@ security patches and stability updates are applied consistently.
 - Removes unused packages
 - Cleans old package files
 - Detects if a system reboot is required
+- **Automatically reboots the server if a reboot is required** (waits for server to come back online)
 - Reports services that may need restarting
 
 ## Prerequisites
@@ -49,7 +50,7 @@ After execution:
 
 - System packages are fully up to date
 - Unused packages are removed
-- A reboot requirement is reported if needed
+- **Server is automatically rebooted if required** (playbook waits for server to come back online)
 - Services that may require restart are listed
 
 ## When to use this playbook

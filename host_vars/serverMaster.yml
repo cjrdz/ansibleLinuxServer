@@ -1,11 +1,6 @@
 ---
 # Server Master Configuration
-# Set these in your .env file:
-#   ANSIBLE_HOST_MASTER=your.master.server.ip
-#   ANSIBLE_SSH_KEY_PATH_MASTER=~/.ssh/your_key (or use ANSIBLE_SSH_KEY_PATH for all servers)
+# Set in .env: ANSIBLE_HOST_MASTER and ANSIBLE_SSH_KEY_PATH
 
 ansible_host: "{{ lookup('env', 'ANSIBLE_HOST_MASTER') | mandatory }}"
-ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY_PATH_MASTER') | default(lookup('env', 'ANSIBLE_SSH_KEY_PATH')) }}"
-
-# server_role: master
-# server_function: kubernetes_master
+ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY_PATH_MASTER') | default(lookup('env', 'ANSIBLE_SSH_KEY_PATH') | mandatory) }}"

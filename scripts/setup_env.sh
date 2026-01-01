@@ -78,27 +78,48 @@ mkdir -p "${PROJECT_ROOT}/logs"
 log_info "Checking SSH keys..."
 KEYS_VALID=true
 
-if [ -n "${ANSIBLE_SSH_KEY_PATH_MASTER:-}" ]; then
-    if [ -f "$ANSIBLE_SSH_KEY_PATH_MASTER" ]; then
-        log_success "Master SSH key found: $ANSIBLE_SSH_KEY_PATH_MASTER"
+# Function to get SSH key path for a host (per-host or common)
+get_ssh_key_for_host() {
+    local host_name="$1"
+    local host_key_var="ANSIBLE_SSH_KEY_PATH_${host_name^^}"
+    local host_key="${!host_key_var:-}"
+    
+    if [ -n "$host_key" ]; then
+        echo "$host_key"
+    elif [ -n "${ANSIBLE_SSH_KEY_PATH:-}" ]; then
+        echo "$ANSIBLE_SSH_KEY_PATH"
     else
-        log_error "Master SSH key not found at: $ANSIBLE_SSH_KEY_PATH_MASTER"
+        echo ""
+    fi
+}
+
+# Check common SSH key or per-host keys
+if [ -n "${ANSIBLE_SSH_KEY_PATH:-}" ]; then
+    if [ -f "$ANSIBLE_SSH_KEY_PATH" ]; then
+        log_success "Common SSH key found: $ANSIBLE_SSH_KEY_PATH"
+    else
+        log_error "Common SSH key not found at: $ANSIBLE_SSH_KEY_PATH"
         KEYS_VALID=false
     fi
-else
-    log_error "ANSIBLE_SSH_KEY_PATH_MASTER not set in .env"
-    KEYS_VALID=false
 fi
 
-if [ -n "${ANSIBLE_SSH_KEY_PATH_NODE1:-}" ]; then
-    if [ -f "$ANSIBLE_SSH_KEY_PATH_NODE1" ]; then
-        log_success "Node1 SSH key found: $ANSIBLE_SSH_KEY_PATH_NODE1"
-    else
-        log_error "Node1 SSH key not found at: $ANSIBLE_SSH_KEY_PATH_NODE1"
-        KEYS_VALID=false
+# Check per-host keys if they exist (optional override)
+for host in MASTER NODE1; do
+    host_key_var="ANSIBLE_SSH_KEY_PATH_${host}"
+    if [ -n "${!host_key_var:-}" ]; then
+        if [ -f "${!host_key_var}" ]; then
+            log_success "${host} SSH key found: ${!host_key_var}"
+        else
+            log_error "${host} SSH key not found at: ${!host_key_var}"
+            KEYS_VALID=false
+        fi
     fi
-else
-    log_error "ANSIBLE_SSH_KEY_PATH_NODE1 not set in .env"
+done
+
+# Validate that at least common key or all per-host keys are set
+if [ -z "${ANSIBLE_SSH_KEY_PATH:-}" ] && \
+   ([ -z "${ANSIBLE_SSH_KEY_PATH_MASTER:-}" ] || [ -z "${ANSIBLE_SSH_KEY_PATH_NODE1:-}" ]); then
+    log_error "Either ANSIBLE_SSH_KEY_PATH or both ANSIBLE_SSH_KEY_PATH_MASTER and ANSIBLE_SSH_KEY_PATH_NODE1 must be set"
     KEYS_VALID=false
 fi
 
@@ -107,7 +128,7 @@ if [ "$KEYS_VALID" = false ]; then
     exit 1
 fi
 
-log_success "All SSH keys validated"
+log_success "SSH keys validated"
 log ""
 
 # Function to get current state hash
@@ -150,15 +171,22 @@ check_server_nginx_status() {
 # Function to get all server info from environment and inventory
 get_server_info() {
     local server_config=""
+    local ssh_key=""
 
     # Master server
-    if [ -n "${ANSIBLE_HOST_MASTER:-}" ] && [ -n "${ANSIBLE_SSH_KEY_PATH_MASTER:-}" ]; then
-        server_config+="serverMaster|${ANSIBLE_HOST_MASTER}|${ANSIBLE_SSH_KEY_PATH_MASTER}\n"
+    if [ -n "${ANSIBLE_HOST_MASTER:-}" ]; then
+        ssh_key="${ANSIBLE_SSH_KEY_PATH_MASTER:-${ANSIBLE_SSH_KEY_PATH:-}}"
+        if [ -n "$ssh_key" ]; then
+            server_config+="serverMaster|${ANSIBLE_HOST_MASTER}|${ssh_key}\n"
+        fi
     fi
 
     # Node1 server
-    if [ -n "${ANSIBLE_HOST_NODE1:-}" ] && [ -n "${ANSIBLE_SSH_KEY_PATH_NODE1:-}" ]; then
-        server_config+="serverNode1|${ANSIBLE_HOST_NODE1}|${ANSIBLE_SSH_KEY_PATH_NODE1}\n"
+    if [ -n "${ANSIBLE_HOST_NODE1:-}" ]; then
+        ssh_key="${ANSIBLE_SSH_KEY_PATH_NODE1:-${ANSIBLE_SSH_KEY_PATH:-}}"
+        if [ -n "$ssh_key" ]; then
+            server_config+="serverNode1|${ANSIBLE_HOST_NODE1}|${ssh_key}\n"
+        fi
     fi
 
     echo -e "$server_config"

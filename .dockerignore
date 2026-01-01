@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# Logs
+logs/*.log
+
+# Environment files (will be mounted/loaded separately)
+.env
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

@@ -65,7 +65,24 @@
       when: reboot_required.stat.exists
 
     # ------------------------------------------------------------------------
-    # STEP 4: Identify Services Requiring Restart (Detective Control)
+    # STEP 4: Reboot Server if Required (Corrective Control)
+    # ------------------------------------------------------------------------
+    # Automatically reboots the server when kernel or critical system packages
+    # have been updated and require a reboot to take effect
+    # reboot_timeout: Maximum time to wait for server to come back online (default: 600 seconds)
+    # pre_reboot_delay: Wait time before initiating reboot (default: 0 seconds)
+    # post_reboot_delay: Wait time after reboot before continuing (default: 0 seconds)
+    # test_command: Command to verify system is ready after reboot
+    - name: Reboot server if required
+      ansible.builtin.reboot:
+        reboot_timeout: 600  # Wait up to 10 minutes for server to come back online
+        pre_reboot_delay: 5  # Wait 5 seconds before initiating reboot
+        post_reboot_delay: 30  # Wait 30 seconds after reboot before continuing
+        test_command: uptime
+      when: reboot_required.stat.exists
+
+    # ------------------------------------------------------------------------
+    # STEP 5: Identify Services Requiring Restart (Detective Control)
     # ------------------------------------------------------------------------
     # needrestart tool identifies services that need restart after updates
     # -b flag = batch mode (non-interactive output)

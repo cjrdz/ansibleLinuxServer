@@ -1,14 +1,11 @@
 ---
+# Inventory - Host-specific variables are in host_vars/
 all:
   children:
     ubuntu_servers:
       hosts:
         serverMaster:
-          ansible_host: "{{ lookup('env', 'ANSIBLE_HOST_MASTER') }}"
-          ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY_PATH_MASTER') }}"
         serverNode1:
-          ansible_host: "{{ lookup('env', 'ANSIBLE_HOST_NODE1') }}"
-          ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY_PATH_NODE1') }}"
       vars:
         ansible_python_interpreter: /usr/bin/python3
         ansible_user: ubuntu

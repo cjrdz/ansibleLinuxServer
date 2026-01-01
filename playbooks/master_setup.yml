@@ -15,7 +15,7 @@
         msg: "Starting complete hardening process for {{ inventory_hostname }}"
 
 - import_playbook: 01_updates_patching.yml
-- import_playbook: 02_nginx_hardening.yml
+- import_playbook: 02_nginx_ubuntu.yml
 - import_playbook: 03_ufw_firewall.yml
 - import_playbook: 04_ssh_hardening.yml
 

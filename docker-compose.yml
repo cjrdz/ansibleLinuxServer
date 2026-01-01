@@ -1,0 +1,27 @@
+services:
+  ansible:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ansible-ubuntu-server
+    volumes:
+      # Mount the entire project directory
+      - .:/workspace
+      # Mount SSH keys from host (adjust path as needed)
+      - ~/.ssh:/root/.ssh:ro
+      # Mount parent directory to access SSH keys outside ~/.ssh
+      # If your SSH keys are in a different location, update this path
+      # Example: if keys are in /path/to/keys, change to: /path/to:/mnt/keys:ro
+      - /home/dev/dev-ops:/mnt/dev-ops:ro
+    environment:
+      # Load environment variables from .env file if it exists
+      - ANSIBLE_HOST_MASTER=${ANSIBLE_HOST_MASTER:-}
+      - ANSIBLE_HOST_NODE1=${ANSIBLE_HOST_NODE1:-}
+      - ANSIBLE_SSH_KEY_PATH=${ANSIBLE_SSH_KEY_PATH:-}
+      - ANSIBLE_SSH_KEY_PATH_MASTER=${ANSIBLE_SSH_KEY_PATH_MASTER:-}
+      - ANSIBLE_SSH_KEY_PATH_NODE1=${ANSIBLE_SSH_KEY_PATH_NODE1:-}
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
+    network_mode: host
