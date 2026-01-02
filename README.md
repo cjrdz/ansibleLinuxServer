@@ -26,8 +26,13 @@ Automated security hardening for Ubuntu servers with NGINX using Ansible.
 
 2. **Build and run:**
    ```bash
-   docker-compose build
-   docker-compose run --rm ansible ansible ubuntu_servers -m ping
+   # Use 'docker compose' (space) for Docker Compose v2+ (recommended)
+   docker compose build
+   docker compose run --rm ansible ansible ubuntu_servers -m ping
+   
+   # Or use 'docker-compose' (hyphen) if you have standalone docker-compose installed
+   # docker-compose build
+   # docker-compose run --rm ansible ansible ubuntu_servers -m ping
    ```
 
 ### Option 2: Local Installation
@@ -91,16 +96,18 @@ Then in `.env`: `export ANSIBLE_SSH_KEY_PATH=/mnt/ssh-keys/your_key_name`
 
 ```bash
 # Interactive shell
-docker-compose run --rm ansible bash
+docker compose run --rm ansible bash
 
 # Run playbook
-docker-compose run --rm ansible ansible-playbook playbooks/01_updates_patching.yml
+docker compose run --rm ansible ansible-playbook playbooks/01_updates_patching.yml
 
 # Run menu script
-docker-compose run --rm ansible ./scripts/run_menu.sh
+docker compose run --rm ansible ./scripts/run_menu.sh
 
 # Test connectivity
-docker-compose run --rm ansible ansible ubuntu_servers -m ping
+docker compose run --rm ansible ansible ubuntu_servers -m ping
+
+# Note: If you have standalone docker-compose installed, replace 'docker compose' with 'docker-compose'
 ```
 
 ### Local Method
@@ -147,22 +154,28 @@ All sensitive data is configured via environment variables in the `.env` file, w
 
 ### Docker Permission Denied
 ```bash
-sudo docker-compose build
+sudo docker compose build
 # Or add user to docker group: sudo usermod -aG docker $USER
+# Then logout and login again, or use: newgrp docker
 ```
 
 ### SSH Key Not Found (Docker)
 - Verify path in `.env` matches container location
-- Check: `docker-compose run --rm ansible ls -la /root/.ssh/`
+- Check: `docker compose run --rm ansible ls -la /root/.ssh/`
 
 ### Can't Connect to Servers
-- Test: `docker-compose run --rm ansible ping YOUR_SERVER_IP`
+- Test: `docker compose run --rm ansible ping YOUR_SERVER_IP`
 - Verify network mode is `host` in `docker-compose.yml`
 
 ### Environment Variables Not Working
 - Ensure `.env` exists in project root
 - Check format (use `export` statements)
-- Verify: `docker-compose run --rm ansible env | grep ANSIBLE`
+- Verify: `docker compose run --rm ansible env | grep ANSIBLE`
+
+### docker-compose: command not found
+- Modern Docker installations use `docker compose` (space) instead of `docker-compose` (hyphen)
+- Use: `docker compose build` instead of `docker-compose build`
+- If you prefer the standalone version, install it: `sudo dnf install docker-compose` (Fedora/RHEL)
 
 ## Documentation
 
