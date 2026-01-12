@@ -1,182 +1,182 @@
-# Ubuntu Servers with NGINX Hardening Automation
+# Automatización de Hardening de Servidores Ubuntu con NGINX
 
-Automated security hardening for Ubuntu servers with NGINX using Ansible.
+Automatización de hardening de seguridad para servidores Ubuntu con NGINX usando Ansible.
 
-## Prerequisites
+## Prerrequisitos
 
-- **Local Installation:** 
-  - Ansible installed on your system
-  - Install required collections: `ansible-galaxy collection install -r requirements.yml`
-- **Docker Method:** Docker and Docker Compose installed
-- SSH keys configured for accessing your target servers
+- **Instalación Local:** 
+  - Ansible instalado en tu sistema
+  - Instalar colecciones requeridas: `ansible-galaxy collection install -r requirements.yml`
+- **Método Docker:** Docker y Docker Compose instalados
+- Claves SSH configuradas para acceder a tus servidores objetivo
 
-## Quick Start
+## Inicio Rápido
 
-### Option 1: Using Docker (Recommended)
+### Opción 1: Usando Docker (Recomendado)
 
-1. **Create `.env` file:**
+1. **Crear archivo `.env`:**
    ```bash
-   # Server IP addresses
+   # Direcciones IP de servidores
    export ANSIBLE_HOST_MASTER=127.0.0.1
    export ANSIBLE_HOST_NODE1=127.0.0.2
    
-   # SSH key path (inside container)
+   # Ruta de clave SSH (dentro del contenedor)
    export ANSIBLE_SSH_KEY_PATH=/root/.ssh/id_rsa
    ```
 
-2. **Build and run:**
+2. **Construir y ejecutar:**
    ```bash
-   # Use 'docker compose' (space) for Docker Compose v2+ (recommended)
+   # Usar 'docker compose' (espacio) para Docker Compose v2+ (recomendado)
    docker compose build
    docker compose run --rm ansible ansible ubuntu_servers -m ping
    
-   # Or use 'docker-compose' (hyphen) if you have standalone docker-compose installed
+   # O usar 'docker-compose' (guion) si tienes docker-compose standalone instalado
    # docker-compose build
    # docker-compose run --rm ansible ansible ubuntu_servers -m ping
    ```
 
-### Option 2: Local Installation
+### Opción 2: Instalación Local
 
-1. **Create `.env` file:**
+1. **Crear archivo `.env`:**
    ```bash
    export ANSIBLE_HOST_MASTER=127.0.0.1
    export ANSIBLE_HOST_NODE1=127.0.0.2
    export ANSIBLE_SSH_KEY_PATH=~/.ssh/id_rsa
    ```
 
-2. **Install Ansible collections:**
+2. **Instalar colecciones de Ansible:**
    ```bash
    ansible-galaxy collection install -r requirements.yml
    ```
 
-3. **Source and test:**
+3. **Cargar y probar:**
    ```bash
    source .env
    ansible ubuntu_servers -m ping
    ```
 
-## Setup
+## Configuración
 
-### Environment Configuration
+### Configuración del Entorno
 
-Create a `.env` file in the project root:
+Crear un archivo `.env` en la raíz del proyecto:
 
 ```bash
-# Required: Server IP addresses
+# Requerido: Direcciones IP de servidores
 export ANSIBLE_HOST_MASTER=127.0.0.1
 export ANSIBLE_HOST_NODE1=127.0.0.2
 
-# Required: SSH key path
-# For Docker: use container path (e.g., /root/.ssh/id_rsa)
-# For Local: use host path (e.g., ~/.ssh/id_rsa)
+# Requerido: Ruta de clave SSH
+# Para Docker: usar ruta del contenedor (ej., /root/.ssh/id_rsa)
+# Para Local: usar ruta del host (ej., ~/.ssh/id_rsa)
 export ANSIBLE_SSH_KEY_PATH=/root/.ssh/id_rsa
 ```
 
-**SSH Key Paths:**
-- **Docker:** If keys are in `~/.ssh` → use `/root/.ssh/id_rsa`
-- **Docker:** If keys are elsewhere → mount in `docker-compose.yml` and use `/mnt/ssh-keys/keyname`
-- **Local:** Use host path like `~/.ssh/id_rsa`
+**Rutas de Claves SSH:**
+- **Docker:** Si las claves están en `~/.ssh` → usar `/root/.ssh/id_rsa`
+- **Docker:** Si las claves están en otro lugar → montar en `docker-compose.yml` y usar `/mnt/ssh-keys/nombre_clave`
+- **Local:** Usar ruta del host como `~/.ssh/id_rsa`
 
-### Custom SSH Key Location (Docker)
+### Ubicación Personalizada de Clave SSH (Docker)
 
-If SSH keys are not in `~/.ssh`, update `docker-compose.yml`:
+Si las claves SSH no están en `~/.ssh`, actualizar `docker-compose.yml`:
 
 ```yaml
 volumes:
   - .:/workspace
   - ~/.ssh:/root/.ssh:ro
-  - /path/to/your/ssh/keys:/mnt/ssh-keys:ro  # Add this
+  - /ruta/a/tus/claves/ssh:/mnt/ssh-keys:ro  # Agregar esto
 ```
 
-Then in `.env`: `export ANSIBLE_SSH_KEY_PATH=/mnt/ssh-keys/your_key_name`
+Luego en `.env`: `export ANSIBLE_SSH_KEY_PATH=/mnt/ssh-keys/tu_nombre_clave`
 
-## Usage
+## Uso
 
-### Docker Method
+### Método Docker
 
 ```bash
-# Interactive shell
+# Shell interactivo
 docker compose run --rm ansible bash
 
-# Run playbook
+# Ejecutar playbook
 docker compose run --rm ansible ansible-playbook playbooks/01_updates_patching.yml
 
-# Run menu script
+# Ejecutar script de menú
 docker compose run --rm ansible ./scripts/run_menu.sh
 
-# Test connectivity
+# Probar conectividad
 docker compose run --rm ansible ansible ubuntu_servers -m ping
 
-# Note: If you have standalone docker-compose installed, replace 'docker compose' with 'docker-compose'
+# Nota: Si tienes docker-compose standalone instalado, reemplazar 'docker compose' con 'docker-compose'
 ```
 
-### Local Method
+### Método Local
 
 ```bash
-# Source environment
+# Cargar entorno
 source .env
 
-# Run menu script
+# Ejecutar script de menú
 ./scripts/run_menu.sh
 
-# Run playbook
+# Ejecutar playbook
 ansible-playbook playbooks/01_updates_patching.yml
 
-# Test connectivity
+# Probar conectividad
 ansible ubuntu_servers -m ping
 ```
 
-## Project Structure
+## Estructura del Proyecto
 
-- `playbooks/` - Individual hardening playbooks
-- `group_vars/` - Variables shared across server groups
-- `host_vars/` - Host-specific configurations
-- `docs/` - Detailed documentation
-- `scripts/` - Setup and menu scripts
-- `requirements.yml` - Ansible collections requirements
-- `IMPROVEMENTS.md` - Recommended improvements and best practices
+- `playbooks/` - Playbooks individuales de hardening
+- `group_vars/` - Variables compartidas entre grupos de servidores
+- `host_vars/` - Configuraciones específicas por host
+- `docs/` - Documentación detallada
+- `scripts/` - Scripts de configuración y menú
+- `requirements.yml` - Requisitos de colecciones de Ansible
+- `IMPROVEMENTS.md` - Mejoras recomendadas y mejores prácticas
 
 ## Playbooks
 
-1. **01_updates_patching.yml** - System updates and patch management
-2. **02_nginx_ubuntu.yml** - NGINX web server installation and configuration
-3. **03_ufw_firewall.yml** - UFW firewall configuration
-4. **04_ssh_hardening.yml** - SSH daemon security hardening
-5. **master_setup.yml** - Complete setup playbook (runs all playbooks in order)
+1. **01_updates_patching.yml** - Actualizaciones del sistema y gestión de parches
+2. **02_nginx_ubuntu.yml** - Instalación y configuración del servidor web NGINX
+3. **03_ufw_firewall.yml** - Configuración del firewall UFW
+4. **04_ssh_hardening.yml** - Hardening de seguridad del demonio SSH
+5. **master_setup.yml** - Playbook de configuración completa (ejecuta todos los playbooks en orden)
 
-## Security Note
+## Nota de Seguridad
 
-**Sensitive information (IP addresses and SSH keys) are NOT committed to version control.**
+**La información sensible (direcciones IP y claves SSH) NO se confirma en el control de versiones.**
 
-All sensitive data is configured via environment variables in the `.env` file, which is git-ignored.
+Todos los datos sensibles se configuran mediante variables de entorno en el archivo `.env`, que está ignorado por git.
 
-## Troubleshooting
+## Solución de Problemas
 
-### Docker Permission Denied
+### Permiso Denegado en Docker
 ```bash
 sudo docker compose build
-# Or add user to docker group: sudo usermod -aG docker $USER
-# Then logout and login again, or use: newgrp docker
+# O agregar usuario al grupo docker: sudo usermod -aG docker $USER
+# Luego cerrar sesión y volver a iniciar, o usar: newgrp docker
 ```
 
-### SSH Key Not Found (Docker)
-- Verify path in `.env` matches container location
-- Check: `docker compose run --rm ansible ls -la /root/.ssh/`
+### Clave SSH No Encontrada (Docker)
+- Verificar que la ruta en `.env` coincida con la ubicación del contenedor
+- Verificar: `docker compose run --rm ansible ls -la /root/.ssh/`
 
-### Can't Connect to Servers
-- Test: `docker compose run --rm ansible ping YOUR_SERVER_IP`
-- Verify network mode is `host` in `docker-compose.yml`
+### No Se Puede Conectar a los Servidores
+- Probar: `docker compose run --rm ansible ping TU_IP_SERVIDOR`
+- Verificar que el modo de red sea `host` en `docker-compose.yml`
 
-### Environment Variables Not Working
-- Ensure `.env` exists in project root
-- Check format (use `export` statements)
-- Verify: `docker compose run --rm ansible env | grep ANSIBLE`
+### Variables de Entorno No Funcionan
+- Asegurar que `.env` exista en la raíz del proyecto
+- Verificar formato (usar declaraciones `export`)
+- Verificar: `docker compose run --rm ansible env | grep ANSIBLE`
 
-### docker-compose: command not found
-- Modern Docker installations use `docker compose` (space) instead of `docker-compose` (hyphen)
-- Use: `docker compose build` instead of `docker-compose build`
-- If you prefer the standalone version, install it: `sudo dnf install docker-compose` (Fedora/RHEL)
+### docker-compose: comando no encontrado
+- Las instalaciones modernas de Docker usan `docker compose` (espacio) en lugar de `docker-compose` (guion)
+- Usar: `docker compose build` en lugar de `docker-compose build`
+- Si prefieres la versión standalone, instalarla: `sudo dnf install docker-compose` (Fedora/RHEL)
 
-## Documentation
+## Documentación
 
-See the `docs/` directory for detailed documentation on each playbook.
+Ver el directorio `docs/` para documentación detallada de cada playbook.

@@ -1,27 +1,27 @@
-# Ubuntu servers with NGINX Hardening Documentation
+# Documentación de Hardening de Servidores Ubuntu con NGINX
 
-This directory contains detailed documentation for each hardening playbook.
+Este directorio contiene documentación detallada para cada playbook de hardening.
 
-## Available Documentation
+## Documentación Disponible
 
-- [SSH Hardening](SSH_HARDENING.md) - SSH daemon security configuration
-- [UFW Firewall](UFW_FIREWALL.md) - Firewall configuration and management
-- [Updates & Patching](UPDATES_PATCHING.md) - System update automation
+- [Hardening SSH](SSH_HARDENING.md) - Configuración de seguridad del demonio SSH
+- [Firewall UFW](UFW_FIREWALL.md) - Configuración y gestión del firewall
+- [Actualizaciones y Parches](UPDATES_PATCHING.md) - Automatización de actualizaciones del sistema
 
-## Quick Reference
+## Referencia Rápida
 
-### SSH Hardening
-- Disables root login
-- Enforces key-based authentication
-- Configures session timeouts
-- Restricts access by group
+### Hardening SSH
+- Deshabilita inicio de sesión root
+- Fuerza autenticación basada en claves
+- Configura tiempos de espera de sesión
+- Restringe acceso por grupo
 
-### UFW Firewall
-- Deny-by-default policy
-- Oracle Cloud compatibility
-- Port-based access control
+### Firewall UFW
+- Política de denegar por defecto
+- Compatibilidad con Oracle Cloud
+- Control de acceso basado en puertos
 
-### Updates & Patching
-- Automated package updates
-- Reboot requirement detection
-- Service restart identification
+### Actualizaciones y Parches
+- Actualizaciones automatizadas de paquetes
+- Detección de requisitos de reinicio
+- Identificación de reinicio de servicios

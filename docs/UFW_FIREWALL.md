@@ -1,24 +1,24 @@
-# UFW Firewall Playbook
+# Playbook de Firewall UFW
 
-## Overview
-This Ansible playbook configures UFW (Uncomplicated Firewall) using a
-**deny-by-default** security model. Only explicitly approved ports are
-allowed, reducing network exposure and attack surface.
+## Resumen
+Este playbook de Ansible configura UFW (Uncomplicated Firewall) usando un
+modelo de seguridad **denegar-por-defecto**. Solo los puertos explícitamente
+aprobados están permitidos, reduciendo la exposición de red y la superficie de ataque.
 
-## What This Playbook Does
-- Denies all incoming traffic by default
-- Allows all outgoing traffic
-- Opens only ports defined per host in the inventory
-- Handles Oracle Cloud–specific iptables behavior when required
-- Enables and verifies UFW configuration
+## Qué Hace Este Playbook
+- Deniega todo el tráfico entrante por defecto
+- Permite todo el tráfico saliente
+- Abre solo los puertos definidos por host en el inventario
+- Maneja el comportamiento específico de iptables de Oracle Cloud cuando es requerido
+- Habilita y verifica la configuración de UFW
 
-## Prerequisites
-- Ubuntu-based servers
-- Ansible access with sudo privileges
-- SSH access must be preserved by explicitly allowing the SSH port
+## Prerrequisitos
+- Servidores basados en Ubuntu
+- Acceso de Ansible con privilegios sudo
+- El acceso SSH debe preservarse permitiendo explícitamente el puerto SSH
 
-## Configuration
-Each host defines its allowed ports in `inventory.yml`:
+## Configuración
+Cada host define sus puertos permitidos en `inventory.yml`:
 
 ```yaml
 required_ports:
@@ -26,44 +26,44 @@ required_ports:
   - "80/tcp"
   - "443/tcp"
 ```
-For Oracle Cloud instances:
+Para instancias de Oracle Cloud:
 
 ```yaml
 is_oracle_cloud: true
 ```
-❗Always include "22/tcp" (or your custom SSH port) to avoid being locked out.
+❗Siempre incluir "22/tcp" (o tu puerto SSH personalizado) para evitar quedar bloqueado.
 
-## Usage
-Run the playbook commands:
+## Uso
+Ejecutar los comandos del playbook:
 
-**Dry | Dev run**
+**Ejecución en Modo Prueba | Desarrollo**
 ```bash
-# The --check allows you to test the playbook without making changes, like a preview
+# El --check te permite probar el playbook sin hacer cambios, como una vista previa
 ansible-playbook playbooks/03_ufw_firewall.yml --check
 ```
-**Production run**
+**Ejecución en Producción**
 ```bash
-# This command runs the playbook applies the changes or configuration
+# Este comando ejecuta el playbook y aplica los cambios o configuración
 ansible-playbook playbooks/03_ufw_firewall.yml
 ```
-**Limit execution to a single host**
+**Limitar ejecución a un solo host**
 ```bash
-# Run the source command to load environment variables
+# Ejecutar el comando source para cargar variables de entorno
 source .env
-# Now run the playbook with the specified inventory file and limit
+# Ahora ejecutar el playbook con el archivo de inventario especificado y límite
 ansible-playbook playbooks/03_ufw_firewall.yml -i inventory.yml --limit serverNode1
 ```
-## Expected results
-After execution:
+## Resultados Esperados
+Después de la ejecución:
 
-- UFW is enabled and active
-- Incoming traffic is denied by default
-- Only defined ports are open
-- Firewall rules are consistent across all servers
+- UFW está habilitado y activo
+- El tráfico entrante está denegado por defecto
+- Solo los puertos definidos están abiertos
+- Las reglas del firewall son consistentes en todos los servidores
 
-## When to use this playbook
+## Cuándo usar este playbook
 
-- During initial server provisioning
-- When adding or removing network services
-- After infrastructure or application changes
-- As part of routine security reviews
+- Durante el aprovisionamiento inicial del servidor
+- Al agregar o eliminar servicios de red
+- Después de cambios en infraestructura o aplicaciones
+- Como parte de revisiones de seguridad rutinarias

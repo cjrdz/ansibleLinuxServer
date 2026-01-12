@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Home | {{ inventory_hostname }}</title>
+        <title>Inicio | {{ inventory_hostname }}</title>
         <link
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
@@ -32,26 +32,26 @@
     </head>
     <body>
         <main>
-            <h1>Welcome to {{ inventory_hostname }}</h1>
+            <h1>Bienvenido a {{ inventory_hostname }}</h1>
 
             <article>
-                <h2>Server Status</h2>
+                <h2>Estado del Servidor</h2>
                 <ul>
                     <li>
-                        <strong>Status:</strong>
-                        <span class="status">✓ Running</span>
+                        <strong>Estado:</strong>
+                        <span class="status">✓ En Ejecución</span>
                     </li>
-                    <li><strong>Web Server:</strong> Nginx</li>
-                    <li><strong>Operating System:</strong> Ubuntu</li>
+                    <li><strong>Servidor Web:</strong> Nginx</li>
+                    <li><strong>Sistema Operativo:</strong> Ubuntu</li>
                     <li>
-                        <strong>Deployed:</strong> {{
+                        <strong>Desplegado:</strong> {{
                         ansible_facts["date_time"]["iso8601"] }}
                     </li>
                 </ul>
             </article>
 
             <footer>
-                <small>Deployed via Ansible</small>
+                <small>Desplegado vía Ansible</small>
             </footer>
         </main>
     </body>

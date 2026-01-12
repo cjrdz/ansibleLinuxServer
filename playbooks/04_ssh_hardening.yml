@@ -1,26 +1,26 @@
 ---
 # ============================================================================
-# SSH HARDENING BASELINE (Key-Only Access)
+# BASELINE DE HARDENING SSH (Acceso Solo con Claves)
 # ============================================================================
 
-- name: Apply SSH Hardening Baseline (sshd_config)
+- name: Aplicar Baseline de Hardening SSH (sshd_config)
   hosts: ubuntu_servers
-  become: true # Required to modify system files and restart services
+  become: true # Requerido para modificar archivos del sistema y reiniciar servicios
 
   vars:
-    # CRITICAL: Define groups explicitly allowed to connect via SSH
-    # Ensure your Ansible user (ubuntu) is a member of one of these groups
+    # CRÍTICO: Definir grupos explícitamente permitidos para conectarse vía SSH
+    # Asegurar que tu usuario de Ansible (ubuntu) sea miembro de uno de estos grupos
     allowed_ssh_groups: "ubuntu sudo"
 
-    # Terminate idle sessions after 5 minutes (300 seconds)
-    # Prevents unattended sessions from becoming a security liability
+    # Terminar sesiones inactivas después de 5 minutos (300 segundos)
+    # Previene que sesiones desatendidas se conviertan en un riesgo de seguridad
     client_alive_timeout: 300
 
   tasks:
     # ------------------------------------------------------------------------
-    # STEP 1: Ensure SSH Server Package is Installed
+    # PASO 1: Asegurar que el Paquete del Servidor SSH Esté Instalado
     # ------------------------------------------------------------------------
-    - name: Ensure SSH server package is installed
+    - name: Asegurar que el paquete del servidor SSH esté instalado
       ansible.builtin.apt:
         name: openssh-server
         state: present
@@ -28,10 +28,10 @@
       tags: install
 
     # ------------------------------------------------------------------------
-    # STEP 2: Force SSH Protocol 2 (Modern and Secure)
+    # PASO 2: Forzar Protocolo SSH 2 (Moderno y Seguro)
     # ------------------------------------------------------------------------
-    # Protocol 1 is deprecated and vulnerable to attacks
-    - name: Ensure SSH Protocol 2 is used
+    # El Protocolo 1 está deprecado y es vulnerable a ataques
+    - name: Asegurar que se use el Protocolo SSH 2
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^Protocol"
@@ -40,11 +40,11 @@
       notify: Restart sshd
 
     # ------------------------------------------------------------------------
-    # STEP 3: Disable Root Login
+    # PASO 3: Deshabilitar Inicio de Sesión Root
     # ------------------------------------------------------------------------
-    # Prevents direct brute-force attacks against the root account
-    # Root access should only be gained through sudo after normal user login
-    - name: Disable Root Login
+    # Previene ataques de fuerza bruta directos contra la cuenta root
+    # El acceso root solo debe obtenerse a través de sudo después del inicio de sesión de usuario normal
+    - name: Deshabilitar Inicio de Sesión Root
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^PermitRootLogin"
@@ -53,12 +53,12 @@
       notify: Restart sshd
 
     # ------------------------------------------------------------------------
-    # STEP 4: Disable Password Authentication (Key-Only Access)
+    # PASO 4: Deshabilitar Autenticación por Contraseña (Acceso Solo con Claves)
     # ------------------------------------------------------------------------
-    # CRITICAL: This forces SSH key-based authentication only
-    # Eliminates risk of weak/compromised passwords for remote access
-    # WARNING: Ensure you have SSH keys configured before applying this
-    - name: Disable Password Authentication (Force Key-Only Login)
+    # CRÍTICO: Esto fuerza solo autenticación basada en claves SSH
+    # Elimina el riesgo de contraseñas débiles/comprometidas para acceso remoto
+    # ADVERTENCIA: Asegurar que tengas claves SSH configuradas antes de aplicar esto
+    - name: Deshabilitar Autenticación por Contraseña (Forzar Inicio de Sesión Solo con Claves)
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^PasswordAuthentication"
@@ -67,11 +67,11 @@
       notify: Restart sshd
 
     # ------------------------------------------------------------------------
-    # STEP 5: Restrict SSH Access to Specific Groups
+    # PASO 5: Restringir Acceso SSH a Grupos Específicos
     # ------------------------------------------------------------------------
-    # Only users in defined groups (e.g., ubuntu, sudo) can connect via SSH
-    # Provides an additional layer of access control
-    - name: Restrict SSH Access to Specific Groups
+    # Solo usuarios en grupos definidos (ej., ubuntu, sudo) pueden conectarse vía SSH
+    # Proporciona una capa adicional de control de acceso
+    - name: Restringir Acceso SSH a Grupos Específicos
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^AllowGroups"
@@ -81,11 +81,11 @@
       notify: Restart sshd
 
     # ------------------------------------------------------------------------
-    # STEP 6: Disable X11 Forwarding
+    # PASO 6: Deshabilitar Reenvío X11
     # ------------------------------------------------------------------------
-    # X11 forwarding is rarely needed and can be a security risk
-    # Disable unless specifically required for your use case
-    - name: Disable X11 Forwarding
+    # El reenvío X11 rara vez es necesario y puede ser un riesgo de seguridad
+    # Deshabilitar a menos que sea específicamente requerido para tu caso de uso
+    - name: Deshabilitar Reenvío X11
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^X11Forwarding"
@@ -94,11 +94,11 @@
       notify: Restart sshd
 
     # ------------------------------------------------------------------------
-    # STEP 7: Configure Idle Session Timeout
+    # PASO 7: Configurar Tiempo de Espera de Sesión Inactiva
     # ------------------------------------------------------------------------
-    # ClientAliveInterval: Server sends keepalive message every N seconds
-    # If client doesn't respond, connection is considered idle
-    - name: Set Client Idle Timeout (Timeout after 5 minutes of no activity)
+    # ClientAliveInterval: El servidor envía mensaje keepalive cada N segundos
+    # Si el cliente no responde, la conexión se considera inactiva
+    - name: Establecer Tiempo de Espera de Cliente Inactivo (Timeout después de 5 minutos sin actividad)
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^ClientAliveInterval"
@@ -106,9 +106,9 @@
         state: present
       notify: Restart sshd
 
-    # ClientAliveCountMax: Number of keepalive messages before disconnect
-    # With interval=300 and count=3, session terminates after 15 mins idle
-    - name: Limit ClientAliveCountMax to 3 checks
+    # ClientAliveCountMax: Número de mensajes keepalive antes de desconectar
+    # Con interval=300 y count=3, la sesión termina después de 15 mins inactiva
+    - name: Limitar ClientAliveCountMax a 3 verificaciones
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^ClientAliveCountMax"
@@ -117,11 +117,11 @@
       notify: Restart sshd
 
   # --------------------------------------------------------------------------
-  # HANDLERS: Only Execute When Configuration Changes
+  # HANDLERS: Solo Ejecutar Cuando Cambie la Configuración
   # --------------------------------------------------------------------------
   handlers:
-    # Restart SSH daemon to apply configuration changes
-    # Only runs if one of the tasks above reports a change
+    # Reiniciar demonio SSH para aplicar cambios de configuración
+    # Solo se ejecuta si una de las tareas anteriores reporta un cambio
     - name: Restart sshd
       ansible.builtin.service:
         name: ssh

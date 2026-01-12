@@ -1,20 +1,20 @@
 ---
-# Common variables for all Ubuntu servers
+# Variables comunes para todos los servidores Ubuntu
 
-# Security baseline
+# Baseline de seguridad
 security_baseline:
   ssh_port: 22
   allowed_ssh_users:
     - ubuntu
     - ansible_admin
 
-# Firewall rules
+# Reglas de firewall
 firewall_rules:
   - { port: 22, proto: tcp, rule: allow, comment: "SSH" }
   - { port: 80, proto: tcp, rule: allow, comment: "HTTP" }
   - { port: 443, proto: tcp, rule: allow, comment: "HTTPS" }
 
-# Required ports for UFW (format: "port/protocol")
+# Puertos requeridos para UFW (formato: "puerto/protocolo")
 required_ports:
   - "22/tcp"
   - "80/tcp"

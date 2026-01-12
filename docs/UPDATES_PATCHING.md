@@ -1,61 +1,61 @@
-# Updates & Patching Playbook
+# Playbook de Actualizaciones y Parches
 
-## Overview
-This playbook automates system updates on Ubuntu servers to ensure
-security patches and stability updates are applied consistently.
+## Resumen
+Este playbook automatiza las actualizaciones del sistema en servidores Ubuntu para asegurar
+que los parches de seguridad y actualizaciones de estabilidad se apliquen consistentemente.
 
-## What This Playbook Does
-- Updates the apt package cache
-- Installs available package upgrades
-- Removes unused packages
-- Cleans old package files
-- Detects if a system reboot is required
-- **Automatically reboots the server if a reboot is required** (waits for server to come back online)
-- Reports services that may need restarting
+## Qué Hace Este Playbook
+- Actualiza la caché de paquetes apt
+- Instala actualizaciones de paquetes disponibles
+- Elimina paquetes no utilizados
+- Limpia archivos antiguos de paquetes
+- Detecta si se requiere un reinicio del sistema
+- **Reinicia automáticamente el servidor si se requiere un reinicio** (espera a que el servidor vuelva a estar en línea)
+- Reporta servicios que pueden necesitar reinicio
 
-## Prerequisites
-- Ubuntu-based servers
-- Ansible access with sudo privileges
-- Sufficient disk space for package upgrades
+## Prerrequisitos
+- Servidores basados en Ubuntu
+- Acceso de Ansible con privilegios sudo
+- Espacio en disco suficiente para actualizaciones de paquetes
 
-## Configuration
-This playbook uses standard apt behavior and does not require
-custom configuration variables.
+## Configuración
+Este playbook usa el comportamiento estándar de apt y no requiere
+variables de configuración personalizadas.
 
-**Optional:**
-- Installing the `needrestart` package improves service restart reporting.
+**Opcional:**
+- Instalar el paquete `needrestart` mejora el reporte de reinicio de servicios.
 
-## Usage
-Run the playbook commands:
+## Uso
+Ejecutar los comandos del playbook:
 
-**Dry | Dev run**
+**Ejecución en Modo Prueba | Desarrollo**
 ```bash
-# The --check allows you to test the playbook without making changes, like a preview
+# El --check te permite probar el playbook sin hacer cambios, como una vista previa
 ansible-playbook playbooks/01_updates_patching.yml --check
 ```
-**Production run**
+**Ejecución en Producción**
 ```bash
-# This command runs the playbook applies the changes or configuration
+# Este comando ejecuta el playbook y aplica los cambios o configuración
 ansible-playbook playbooks/01_updates_patching.yml
 ```
-**Limit execution to a single host**
+**Limitar ejecución a un solo host**
 ```bash
-# Run the source command to load environment variables
+# Ejecutar el comando source para cargar variables de entorno
 source .env
-# Now run the playbook with the specified inventory file and limit
+# Ahora ejecutar el playbook con el archivo de inventario especificado y límite
 ansible-playbook playbooks/01_updates_patching.yml -i inventory.yml --limit serverNode1
 ```
-## Expected results
-After execution:
+## Resultados Esperados
+Después de la ejecución:
 
-- System packages are fully up to date
-- Unused packages are removed
-- **Server is automatically rebooted if required** (playbook waits for server to come back online)
-- Services that may require restart are listed
+- Los paquetes del sistema están completamente actualizados
+- Los paquetes no utilizados son eliminados
+- **El servidor se reinicia automáticamente si es requerido** (el playbook espera a que el servidor vuelva a estar en línea)
+- Los servicios que pueden requerir reinicio se listan
 
-## When to use this playbook
+## Cuándo usar este playbook
 
-- Weekly or bi-weekly maintenance windows
-- After critical security advisories
-- Before applying hardening or firewall playbooks
-- As part of routine system maintenance
+- Ventanas de mantenimiento semanales o quincenales
+- Después de avisos críticos de seguridad
+- Antes de aplicar playbooks de hardening o firewall
+- Como parte del mantenimiento rutinario del sistema

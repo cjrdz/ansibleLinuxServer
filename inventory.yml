@@ -1,5 +1,5 @@
 ---
-# Inventory - Host-specific variables are in host_vars/
+# Inventario - Las variables específicas por host están en host_vars/
 all:
   children:
     ubuntu_servers:

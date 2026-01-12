@@ -1,6 +1,6 @@
 ---
-# Server Master Configuration
-# Set in .env: ANSIBLE_HOST_MASTER and ANSIBLE_SSH_KEY_PATH
+# Configuración del Servidor Master
+# Configurar en .env: ANSIBLE_HOST_MASTER y ANSIBLE_SSH_KEY_PATH
 
 ansible_host: "{{ lookup('env', 'ANSIBLE_HOST_MASTER') | mandatory }}"
 ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY_PATH_MASTER') | default(lookup('env', 'ANSIBLE_SSH_KEY_PATH') | mandatory) }}"

@@ -1,74 +1,74 @@
-# SSH Hardening Playbook
+# Playbook de Hardening SSH
 
-## Overview
-This Ansible playbook applies a secure baseline configuration to the SSH daemon (sshd).
-It reduces the attack surface of remote access by enforcing modern SSH security best
-practices across all managed servers.
+## Resumen
+Este playbook de Ansible aplica una configuración de baseline segura al demonio SSH (sshd).
+Reduce la superficie de ataque del acceso remoto al hacer cumplir las mejores prácticas
+de seguridad SSH modernas en todos los servidores gestionados.
 
-## What This Playbook Does
-- Disables direct SSH access for the root user
-- Disables password-based authentication (SSH keys only)
-- Restricts SSH access to specific user groups
-- Enforces idle SSH session timeouts
-- Disables unnecessary features such as X11 forwarding
-- Forces the use of SSH protocol version 2
+## Qué Hace Este Playbook
+- Deshabilita el acceso SSH directo para el usuario root
+- Deshabilita la autenticación basada en contraseña (solo claves SSH)
+- Restringe el acceso SSH a grupos de usuarios específicos
+- Fuerza tiempos de espera de sesiones SSH inactivas
+- Deshabilita características innecesarias como el reenvío X11
+- Fuerza el uso del protocolo SSH versión 2
 
-## Prerequisites
-❗**Important**: SSH key-based authentication must be configured **before** running this playbook.
+## Prerrequisitos
+❗**Importante**: La autenticación basada en claves SSH debe estar configurada **antes** de ejecutar este playbook.
 
-You should be able to log in without a password:
+Deberías poder iniciar sesión sin contraseña:
 ```bash
 ssh user@server_ip
 ```
 
-## Requirements
-- Ubuntu-based servers
-- Ansible access to the target hosts
-- At least one non-root user with sudo privileges
-- SSH public keys already installed on the server
+## Requisitos
+- Servidores basados en Ubuntu
+- Acceso de Ansible a los hosts objetivo
+- Al menos un usuario no root con privilegios sudo
+- Claves públicas SSH ya instaladas en el servidor
 
-## Configuration
-The following variables can be customized inside the playbook:
+## Configuración
+Las siguientes variables se pueden personalizar dentro del playbook:
 
 ```yaml
 allowed_ssh_groups: "ubuntu sudo"
 client_alive_timeout: 300
 ```
-❗Ensure your SSH user belongs to one of the allowed groups to avoid lockout.
+❗Asegurar que tu usuario SSH pertenezca a uno de los grupos permitidos para evitar bloqueo.
 
-## Usage
-Run the playbook commands:
+## Uso
+Ejecutar los comandos del playbook:
 
-**Dry | Dev run**
+**Ejecución en Modo Prueba | Desarrollo**
 ```bash
-# The --check allows you to test the playbook without making changes, like a preview
-ansible-playbook playbooks/02_ssh_hardening.yml --check
+# El --check te permite probar el playbook sin hacer cambios, como una vista previa
+ansible-playbook playbooks/04_ssh_hardening.yml --check
 ```
-**Production run**
+**Ejecución en Producción**
 ```bash
-# This command runs the playbook applies the changes or configuration
-ansible-playbook playbooks/02_ssh_hardening.yml
+# Este comando ejecuta el playbook y aplica los cambios o configuración
+ansible-playbook playbooks/04_ssh_hardening.yml
 ```
-**Limit execution to a single host**
+**Limitar ejecución a un solo host**
 ```bash
-# Run the source command to load environment variables
+# Ejecutar el comando source para cargar variables de entorno
 source .env
-# Now run the playbook with the specified inventory file and limit
-ansible-playbook playbooks/02_ssh_hardening.yml -i inventory.yml --limit serverNode1
+# Ahora ejecutar el playbook con el archivo de inventario especificado y límite
+ansible-playbook playbooks/04_ssh_hardening.yml -i inventory.yml --limit serverNode1
 ```
-## Expected results
-After execution:
+## Resultados Esperados
+Después de la ejecución:
 
-- Root login via SSH is disabled
-- Password authentication is disabled
-- Only approved user groups can access SSH
-- Idle SSH sessions are terminated automatically
-- SSH service is restarted to apply changes
+- El inicio de sesión root vía SSH está deshabilitado
+- La autenticación por contraseña está deshabilitada
+- Solo grupos de usuarios aprobados pueden acceder a SSH
+- Las sesiones SSH inactivas se terminan automáticamente
+- El servicio SSH se reinicia para aplicar cambios
 
-## When to use this playbook
+## Cuándo usar este playbook
 
-- After provisioning new servers
-- After SSH or operating system upgrades
-- As part of baseline system hardening
-- After security reviews or audits
-- After implementing new security policies
+- Después de aprovisionar nuevos servidores
+- Después de actualizaciones de SSH o del sistema operativo
+- Como parte del hardening de baseline del sistema
+- Después de revisiones de seguridad o auditorías
+- Después de implementar nuevas políticas de seguridad

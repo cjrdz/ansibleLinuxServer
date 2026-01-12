@@ -1,36 +1,36 @@
-# Nginx Setup in Ubuntu Server playbook
+# Configuración de Nginx en Playbook de Servidor Ubuntu
 
-## Overview
-This Ansible playbook sets up Nginx on a server and configures it to serve static content with a index.html file on a Oracle Cloud Infrastructure (OCI) instance.
+## Resumen
+Este playbook de Ansible configura Nginx en un servidor y lo configura para servir contenido estático con un archivo index.html en una instancia de Oracle Cloud Infrastructure (OCI).
 
-## What This Playbook Does
-- Installs Nginx
-- Configures Nginx to serve static content
-- Creates an index.html file
+## Qué Hace Este Playbook
+- Instala Nginx
+- Configura Nginx para servir contenido estático
+- Crea un archivo index.html
 
-## Prerequisites
-❗**Important**:
-You must have a valid OCI account and create a linux ubuntu server instance on free tier, also need to configure your VCN with a public IP address and security list rules to allow HTTP traffic. SSH key-based authentication must be configured **before** running this playbook
+## Prerrequisitos
+❗**Importante**:
+Debes tener una cuenta OCI válida y crear una instancia de servidor linux ubuntu en el nivel gratuito, también necesitas configurar tu VCN con una dirección IP pública y reglas de lista de seguridad para permitir tráfico HTTP. La autenticación basada en claves SSH debe estar configurada **antes** de ejecutar este playbook
 
-## Requirements
-- Python 3.6 or later installed on the control machine
-- Ansible 2.9 or later installed on the control machine
-- SSH access to the target ubuntu server instance with proper credentials (private ssh key)
+## Requisitos
+- Python 3.6 o posterior instalado en la máquina de control
+- Ansible 2.9 o posterior instalado en la máquina de control
+- Acceso SSH a la instancia del servidor ubuntu objetivo con credenciales apropiadas (clave ssh privada)
 
-## Configuration
-- You need to create a OCI instance with your prefer name and select Ubuntu Server as the image.
-- You need to configure your VCN with a public IP address and security list rules to allow HTTP traffic. 
+## Configuración
+- Necesitas crear una instancia OCI con tu nombre preferido y seleccionar Ubuntu Server como la imagen.
+- Necesitas configurar tu VCN con una dirección IP pública y reglas de lista de seguridad para permitir tráfico HTTP. 
 
-**Ingress Rules Table:**
+**Tabla de Reglas de Entrada:**
 | Stateless |   Source    | IP Protocol | Source PR | Destination PR | Description      |
 |-----------|-------------|-------------|-----------|----------------|------------------|
 | No        | 0.0.0.0/0   | TCP         | All       | 22             | SSH Remote Login |
 | No        | 0.0.0.0/0   | TCP         | All       | 80             | HTTP Web Server  |
 | No        | 0.0.0.0/0   | TCP         | All       | 443            | HTTPS Web Server |
 
-## Usage
-First, ensure that you have the necessary prerequisites in place. Then, run the playbook using the following command:
+## Uso
+Primero, asegúrate de tener los prerrequisitos necesarios en su lugar. Luego, ejecuta el playbook usando el siguiente comando:
 
-## Expected results
+## Resultados Esperados
 
-## When to use this playbook
+## Cuándo usar este playbook

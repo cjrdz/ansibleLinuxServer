@@ -1,6 +1,6 @@
 ---
-# Server Node1 Configuration
-# Set in .env: ANSIBLE_HOST_NODE1 and ANSIBLE_SSH_KEY_PATH
+# Configuración del Servidor Node1
+# Configurar en .env: ANSIBLE_HOST_NODE1 y ANSIBLE_SSH_KEY_PATH
 
 ansible_host: "{{ lookup('env', 'ANSIBLE_HOST_NODE1') | mandatory }}"
 ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY_PATH_NODE1') | default(lookup('env', 'ANSIBLE_SSH_KEY_PATH') | mandatory) }}"

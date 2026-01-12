@@ -1,101 +1,101 @@
 ---
 # ============================================================================
-# SYSTEM UPDATES AND PATCH MANAGEMENT
+# ACTUALIZACIONES DEL SISTEMA Y GESTIÓN DE PARCHES
 # ============================================================================
 
-- name: Update and Patch Ubuntu Servers
+- name: Actualizar y Aplicar Parches en Servidores Ubuntu
   hosts: ubuntu_servers
   become: true
 
   tasks:
     # ------------------------------------------------------------------------
-    # STEP 1: Update Package Cache
+    # PASO 1: Actualizar Caché de Paquetes
     # ------------------------------------------------------------------------
-    # Equivalent to running: apt update
-    # Fetches the latest package index from Ubuntu repositories
-    # cache_valid_time: Only update if cache is older than 1 hour
-    - name: Update apt package cache
+    # Equivalente a ejecutar: apt update
+    # Obtiene el índice de paquetes más reciente de los repositorios de Ubuntu
+    # cache_valid_time: Solo actualiza si la caché es más antigua de 1 hora
+    - name: Actualizar caché de paquetes apt
       ansible.builtin.apt:
         update_cache: true
-        cache_valid_time: 3600 # 3600 seconds = 1 hour
+        cache_valid_time: 3600 # 3600 segundos = 1 hora
       register: cache_update
 
-    # Display confirmation message when cache update succeeds
-    - name: Display cache update result
+    # Mostrar mensaje de confirmación cuando la actualización de caché tenga éxito
+    - name: Mostrar resultado de actualización de caché
       ansible.builtin.debug:
-        msg: "Package cache updated on {{ inventory_hostname }}"
+        msg: "Caché de paquetes actualizada en {{ inventory_hostname }}"
       when: cache_update is succeeded
 
     # ------------------------------------------------------------------------
-    # STEP 2: Upgrade All Packages
+    # PASO 2: Actualizar Todos los Paquetes
     # ------------------------------------------------------------------------
-    # Equivalent to running: apt dist-upgrade -y
-    # Applies all available security and stability updates
-    # upgrade: dist = Smart dependency handling (similar to full-upgrade)
-    # autoremove: true = Removes packages that are no longer needed
-    # autoclean: true = Removes old package files from cache
-    - name: Upgrade all packages
+    # Equivalente a ejecutar: apt dist-upgrade -y
+    # Aplica todas las actualizaciones de seguridad y estabilidad disponibles
+    # upgrade: dist = Manejo inteligente de dependencias (similar a full-upgrade)
+    # autoremove: true = Elimina paquetes que ya no son necesarios
+    # autoclean: true = Elimina archivos antiguos de paquetes de la caché
+    - name: Actualizar todos los paquetes
       ansible.builtin.apt:
         upgrade: dist
         autoremove: true
         autoclean: true
       register: upgrade_result
 
-    # Display confirmation message when upgrade succeeds
-    - name: Display upgrade results
+    # Mostrar mensaje de confirmación cuando la actualización tenga éxito
+    - name: Mostrar resultados de actualización
       ansible.builtin.debug:
-        msg: "Packages upgraded on {{ inventory_hostname }}"
+        msg: "Paquetes actualizados en {{ inventory_hostname }}"
       when: upgrade_result is succeeded
 
     # ------------------------------------------------------------------------
-    # STEP 3: Check for Reboot Requirement (Detective Control)
+    # PASO 3: Verificar Requisito de Reinicio (Control Detective)
     # ------------------------------------------------------------------------
-    # Ubuntu creates /var/run/reboot-required when kernel or critical
-    # system packages are updated and require a reboot to take effect
-    - name: Check if reboot is required
+    # Ubuntu crea /var/run/reboot-required cuando el kernel o paquetes críticos
+    # del sistema se actualizan y requieren un reinicio para surtir efecto
+    - name: Verificar si se requiere reinicio
       ansible.builtin.stat:
         path: /var/run/reboot-required
       register: reboot_required
 
-    # Alert administrators if reboot is needed
-    # This is a detective control for audit and planning purposes
-    - name: Display reboot notification
+    # Alertar a los administradores si se necesita reinicio
+    # Este es un control detective para auditoría y planificación
+    - name: Mostrar notificación de reinicio
       ansible.builtin.debug:
-        msg: "REBOOT REQUIRED on {{ inventory_hostname }}"
+        msg: "REINICIO REQUERIDO en {{ inventory_hostname }}"
       when: reboot_required.stat.exists
 
     # ------------------------------------------------------------------------
-    # STEP 4: Reboot Server if Required (Corrective Control)
+    # PASO 4: Reiniciar Servidor si es Requerido (Control Correctivo)
     # ------------------------------------------------------------------------
-    # Automatically reboots the server when kernel or critical system packages
-    # have been updated and require a reboot to take effect
-    # reboot_timeout: Maximum time to wait for server to come back online (default: 600 seconds)
-    # pre_reboot_delay: Wait time before initiating reboot (default: 0 seconds)
-    # post_reboot_delay: Wait time after reboot before continuing (default: 0 seconds)
-    # test_command: Command to verify system is ready after reboot
-    - name: Reboot server if required
+    # Reinicia automáticamente el servidor cuando el kernel o paquetes críticos
+    # del sistema han sido actualizados y requieren un reinicio para surtir efecto
+    # reboot_timeout: Tiempo máximo de espera para que el servidor vuelva a estar en línea (por defecto: 600 segundos)
+    # pre_reboot_delay: Tiempo de espera antes de iniciar el reinicio (por defecto: 0 segundos)
+    # post_reboot_delay: Tiempo de espera después del reinicio antes de continuar (por defecto: 0 segundos)
+    # test_command: Comando para verificar que el sistema está listo después del reinicio
+    - name: Reiniciar servidor si es requerido
       ansible.builtin.reboot:
-        reboot_timeout: 600  # Wait up to 10 minutes for server to come back online
-        pre_reboot_delay: 5  # Wait 5 seconds before initiating reboot
-        post_reboot_delay: 30  # Wait 30 seconds after reboot before continuing
+        reboot_timeout: 600  # Esperar hasta 10 minutos para que el servidor vuelva a estar en línea
+        pre_reboot_delay: 5  # Esperar 5 segundos antes de iniciar el reinicio
+        post_reboot_delay: 30  # Esperar 30 segundos después del reinicio antes de continuar
         test_command: uptime
       when: reboot_required.stat.exists
 
     # ------------------------------------------------------------------------
-    # STEP 5: Identify Services Requiring Restart (Detective Control)
+    # PASO 5: Identificar Servicios que Requieren Reinicio (Control Detective)
     # ------------------------------------------------------------------------
-    # needrestart tool identifies services that need restart after updates
-    # -b flag = batch mode (non-interactive output)
-    # This helps identify services using outdated libraries
-    - name: Get list of services that need restart
+    # La herramienta needrestart identifica servicios que necesitan reinicio después de actualizaciones
+    # -b flag = modo batch (salida no interactiva)
+    # Esto ayuda a identificar servicios que usan bibliotecas desactualizadas
+    - name: Obtener lista de servicios que necesitan reinicio
       ansible.builtin.command:
         cmd: needrestart -b
       register: needrestart_output
-      failed_when: false # Don't fail if needrestart is not installed
-      changed_when: false # This is a read-only check
+      failed_when: false # No fallar si needrestart no está instalado
+      changed_when: false # Esta es una verificación de solo lectura
 
-    # Display services that should be restarted to apply updates
-    - name: Show services needing restart
+    # Mostrar servicios que deberían reiniciarse para aplicar actualizaciones
+    - name: Mostrar servicios que necesitan reinicio
       ansible.builtin.debug:
         var: needrestart_output.stdout_lines
       when: needrestart_output.rc == 0
