@@ -1,0 +1,34 @@
+- name: Monitoreo de virtualización
+  hosts: hipervisores_san_lucas
+  tasks:
+    - name: Servicio de auditoría de máquinas virtuales
+      copy:
+        dest: /etc/systemd/system/kvm-audit.service
+        content: |
+          [Unit]
+          Description=Auditoría de integridad de máquinas virtuales
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/virsh list --all
+          ExecStartPost=/usr/bin/virsh domstats
+          # Reportar cualquier VM que no esté en modo seguro o con errores
+          StandardOutput=append:/var/log/kvm-security-audit.log
+
+    - name: Temporizadr
+      copy:
+        dest: /etc/systemd/system/kvm-audit.timer
+        content: |
+          [Unit]
+          Description=Ejecutar auditoría de KVM cada hora
+          [Timer]
+          OnBootSec=5min
+          OnUnitActiveSec=1h
+          [Install]
+          WantedBy=timers.target
+
+    - name: Activar Timer de KVM
+      systemd:
+        name: kvm-audit.timer
+        state: started
+        enabled: yes
+        daemon_reload: yes

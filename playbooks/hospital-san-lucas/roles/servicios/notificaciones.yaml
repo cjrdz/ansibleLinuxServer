@@ -1,0 +1,21 @@
+- name: Configurar notificaciones de Signal en systemd
+  hosts: all
+  tasks:
+    - name: Crear unidad de servicio para notificaciones de error
+      copy:
+        dest: /etc/systemd/system/notify-signal@.service
+        content: |
+          [Unit]
+          Description=Notificación Signal sobre fallo en %i
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/send_signal_alert.sh "El servicio %i ha fallado o detectado una amenaza."
+          User=signaluser
+
+    - name: Vincular servicios de Hardening con Signal
+      lineinfile:
+        path: "/etc/systemd/system/{{ item }}.service"
+        insertafter: '\[Unit\]'
+        line: "OnFailure=notify-signal@%n.service"
+      loop: [ 'aide-check', 'clamav-scan', 'suricata', 'lynis-audit' ]

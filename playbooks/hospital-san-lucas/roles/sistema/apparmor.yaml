@@ -1,0 +1,6 @@
+- name: Configuración de AppArmor
+  hosts: servidores_debian_ubuntults
+  become: yes
+  tasks:
+    - name: Establecer perfiles de servicios críticos en modo "Enforce"
+      shell: aa-enforce /etc/apparmor.d/*

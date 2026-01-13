@@ -1,0 +1,40 @@
+- name: Aislamiento preventivo de servidor comprometido
+  hosts: servidor_afectado
+  become: yes
+  vars:
+    # Configuración de Signal
+    signal_api_url: "http://10.0.50.20:8080/v2/send" # IP de tu contenedor/servidor signal-cli
+    signal_number: "+##########"                  # Tu número registrado
+    signal_recipient: "+34611111111"               # Número del responsable o ID de grupo
+    usuarios_no_criticos: ['user1', 'user2']       # Definido aquí o en host_vars
+
+  tasks:
+    - name: Notificar al equipo de seguridad (Signal)
+      uri:
+        url: "{{ signal_api_url }}"
+        method: POST
+        body_format: json
+        body:
+          message: "Alerta de seguridad: Servidor [{{ inventory_hostname }}] aislado por posible compromiso. Acceso restringido a IP Forense."
+          number: "{{ signal_number }}"
+          recipients: ["{{ signal_recipient }}"]
+        status_code: 201
+      ignore_errors: yes # Evita que el playbook se detenga si falla la notificación
+
+    - name: Aplicar Reglas de Cuarentena (Firewall Estricto)
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+
+    - name: Permitir solo IP de administración para forense
+      ufw:
+        rule: allow
+        from_ip: 10.0.50.10 # IP de la consola de seguridad
+        port: 22
+        proto: tcp
+
+    - name: Terminar sesiones de usuarios no autorizados
+      shell: "pkill -u {{ item }}"
+      loop: "{{ usuarios_no_criticos }}"
+      ignore_errors: yes

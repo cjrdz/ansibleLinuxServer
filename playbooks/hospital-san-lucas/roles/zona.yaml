@@ -1,0 +1,25 @@
+---
+- name: Endurecimiento Integral - Hospital San Lucas
+  hosts: all
+  become: yes
+  roles:
+    - network_hardening
+
+- name: Seguridad perimetral y de red
+  hosts: servidores_clinicos:servidores_administrativos
+  become: yes
+  roles:
+    - intrusion_defense
+
+- name: Servicios de higiene y auditoría
+  hosts: servidores_administrativos:servidores_correo
+  become: yes
+  roles:
+    - security_services
+
+- name: Infraestructura de virtualización
+  hosts: hipervisores_kvm
+  become: yes
+  roles:
+    - kvm_hypervisor
+

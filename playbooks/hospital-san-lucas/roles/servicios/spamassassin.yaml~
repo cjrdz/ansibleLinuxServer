@@ -1,0 +1,84 @@
+- name: Endurecimiento del correo con SpamAssassin
+  hosts: servidores_correo
+  become: yes
+  vars:
+    update_executable: "/usr/bin/sa-update"
+    compile_executable: "/usr/bin/sa-compile"
+
+  tasks:
+    - name: Instalar SpamAssassin y utilidades de red
+      package:
+        name: [spamassassin, spamc, re2c, make] # re2c y make ayudan a la compilación de reglas
+        state: present
+
+    - name: Configurar aprendizaje Bayesiano y nivel de sensibilidad
+      lineinfile:
+        path: /etc/spamassassin/local.cf
+        line: "{{ item }}"
+        state: present
+      loop:
+        - "use_bayes 1"
+        - "bayes_auto_learn 1"
+        - "required_score 5.0"
+      notify: Reiniciar SpamAssassin
+
+    # 1. Crear el servicio para actualizar y compilar reglas
+    - name: Crear archivo de servicio para actualización de SpamAssassin
+      copy:
+        dest: /etc/systemd/system/spamassassin-update.service
+        content: |
+          [Unit]
+          Description=Actualización y Compilación de reglas de SpamAssassin
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=oneshot
+          # Ejecuta actualización, si tiene éxito, compila para mejorar velocidad
+          ExecStart={{ update_executable }}
+          ExecStartPost=-{{ compile_executable }}
+          ExecStartPost=/usr/bin/systemctl try-restart spamassassin.service
+          
+          # Endurecimiento del proceso
+          CapabilityBoundingSet=
+          PrivateTmp=true
+          ProtectHome=true
+          ProtectSystem=strict
+          ReadWritePaths=/var/lib/spamassassin /etc/mail/spamassassin
+
+    # 2. Crear el temporizador para ejecución periódica
+    - name: Crear archivo de timer para SpamAssassin
+      copy:
+        dest: /etc/systemd/system/spamassassin-update.timer
+        content: |
+          [Unit]
+          Description=Actualizar reglas de correo no deseado cada 12 horas
+
+          [Timer]
+          # Se ejecuta 12 horas después del arranque y luego cada 12 horas
+          OnBootSec=15min
+          OnUnitActiveSec=12h
+          RandomizedDelaySec=30min
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+
+    - name: Habilitar y arrancar el temporizador de actualización
+      systemd:
+        name: spamassassin-update.timer
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Asegurar que el servicio principal esté activo
+      systemd:
+        name: spamassassin
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Reiniciar SpamAssassin
+      service:
+        name: spamassassin
+        state: restarted

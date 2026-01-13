@@ -1,0 +1,49 @@
+- name: Auditoría sistemática con Lynis
+  hosts: servidores_clinicos
+  become: yes
+  tasks:
+    - name: Instalar Lynis
+      package:
+        name: lynis
+        state: present
+
+    - name: Crear servicio para auditoría
+      copy:
+        dest: /etc/systemd/system/lynis-audit.service
+        content: |
+          [Unit]
+          Description=Escaneo de Seguridad de Lynis
+          After=network.target
+
+          [Service]
+          Type=oneshot
+          # Ejecuta auditoría rápida y guarda el registro
+          ExecStart=/usr/bin/lynis audit system --quick --log-file /var/log/lynis-report.log
+          
+          # Configuración de recursos
+          CPUWeight=10
+          IOWeight=10
+
+    - name: Crear temporizador para Lynis
+      copy:
+        dest: /etc/systemd/system/lynis-audit.timer
+        content: |
+          [Unit]
+          Description=Ejecutar Lynis todos los lunes a las 04:00 AM
+
+          [Timer]
+          OnCalendar=Mon *-*-* 04:00:00
+          RandomizedDelaySec=1h
+          Persistent=true
+          Unit=lynis-audit.service
+
+          [Install]
+          WantedBy=timers.target
+
+    - name: Activar el temporizador de Lynis
+      systemd:
+        name: lynis-audit.timer
+        state: started
+        enabled: yes
+        daemon_reload: yes
+

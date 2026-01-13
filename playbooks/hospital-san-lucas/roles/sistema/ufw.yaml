@@ -1,0 +1,24 @@
+- name: ufw
+  hosts: servidores_clinicos
+  become: yes
+  tasks:
+    # 1. Política de entrada
+    - name: Configurar política por defecto entrante
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+
+    # 2. Política de salida
+    - name: Configurar política por defecto saliente
+      ufw:
+        policy: allow
+        direction: outgoing
+
+    # 3. Política de servicios esenciales
+    - name: Permitir servicios esenciales
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop: [ '22', '443' ]

@@ -1,0 +1,9 @@
+- name: Vincular alertas a servicios de seguridad
+  hosts: all
+  tasks:
+    - name: Añadir directiva a servicios críticos
+      lineinfile:
+        path: "/etc/systemd/system/{{ item }}.service"
+        insertafter: '\[Unit\]'
+        line: "OnFailure=security-alert@%n.service"
+      loop: [ 'aide-check', 'clamav-scan', 'lynis-audit' ]
