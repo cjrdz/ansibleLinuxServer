@@ -1,0 +1,122 @@
+---
+- name: Configuración y endurecimiento del servidor en el Hospital San Lucas
+  hosts: all
+  become: yes
+  vars:
+    admin_email: "admin@sanlucas.local"
+    db_password: "Cambiame123!" # Usa Ansible Vault
+
+  tasks:
+    ## 1. Configuración de red
+    - name: Instalar NetworkManager
+      apt:
+        name: network-manager
+        state: present
+
+    - name: Filtrado de red mediante DNS
+      nmcli:
+        conn_name: "br0" # Verificar el nombre de la interfaz
+        type: ethernet
+        dns:
+          - 94.140.14.14 # AdGuard Family
+          - 94.140.15.16 # AdGuard Family
+          - 185.228.168.168 # CleanBrowsing Family
+          - 185.228.169.168 # CleanBrowsing Family
+        state: present
+
+    ## 2. Seguridad: UFW y SSH
+    - name: Políticas base de SSH
+      ufw:
+        state: enabled
+        policy: "{{ item.policy }}"
+        direction: "{{ item.direction }}"
+      loop:
+        - { policy: 'deny', direction: 'incoming' }
+        - { policy: 'allow', direction: 'outgoing' }
+
+    - name: Permitir SSH y Servicios Web
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop: ['2222', '80', '443']
+
+    - name: Refuerzo de SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^PasswordAuthentication', line: 'PasswordAuthentication no' }
+      notify: restart ssh
+
+    ## 3. Servicios: Apache, PostgreSQL, Fail2Ban, SpamAssassin
+    - name: Instalar servicios principales
+      apt:
+        name: 
+          - apache2
+          - postgresql
+          - fail2ban
+          - spamassassin
+          - p7zip-full
+          - mailutils
+          - python3-psycopg2
+        state: present
+
+    - name: Habilitar servicios
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop: [apache2, postgresql, fail2ban, spamassassin]
+
+    ## 4. Automatización de respaldos
+    - name: Crear directorio de respaldo
+      file:
+        path: /respaldos
+        state: directory
+    
+    - name: Crear script de respaldo
+      copy:
+        dest: /usr/local/bin/backup_san_lucas.sh
+        mode: '0700'
+        content: |
+          #!/bin/bash
+          DATE=$(date +%Y%m%d)
+          7z a -t7z -mx=9 /backups/hospital_$DATE.7z /var/www/html /var/lib/postgresql
+          echo "Respaldo completado el $DATE" | mail -s "Respaldo realizado con éxito" {{ admin_email }}
+
+    - name: Crear unidad de servicio de respaldo
+      copy:
+        dest: /etc/systemd/system/backup-sl.service
+        content: |
+          [Unit]
+          Description=Backup diario Hospital San Lucas
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/backup_san_lucas.sh
+    - name: Crear temporizador de systemd (Medianoche)
+      copy:
+
+        dest: /etc/systemd/system/backup-sl.timer
+        content: |
+          [Unit]
+          Description=Ejecutar backup a medianoche
+          [Timer]
+          OnCalendar=*-*-* 00:00:00
+          Persistent=true
+          [Install]
+          WantedBy=timers.target
+
+    - name: Activar temporizador de respaldo
+      systemd:
+        name: backup-sl.timer
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: ssh
+        state: restarted
